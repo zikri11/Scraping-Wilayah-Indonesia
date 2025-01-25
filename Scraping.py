@@ -14,11 +14,9 @@
 # Contoh:
 #   API_KEY = "masukkan-api-key-anda-di-sini"
 #
-# Setelah itu, Anda dapat menjalankan program ini untuk mengambil data provinsi, kabupaten, kecamatan, dan desa dari API BinderByte.
+# Setelah itu, Anda dapat menjalankan program ini untuk mengambil data provinsi, kabupaten, dan kecamatan dari API BinderByte.
 # 
 # -------------------------------------------
-# BY: HUM NAITSUGA
-# BY: HUM NAITSUGA
 # BY: HUM NAITSUGA
 # -------------------------------------------
 
@@ -77,25 +75,8 @@ def get_districts(api_url, api_key, city_id):
         print(f"Error saat mengambil data kecamatan: {e}")
         return []
 
-# Fungsi untuk mendapatkan data desa/kelurahan berdasarkan ID kecamatan
-def get_villages(api_url, api_key, district_id):
-    try:
-        url = f"{api_url}?api_key={api_key}&id_kecamatan={district_id}"
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-
-        if data.get("code") == "200":
-            return data.get("value", [])
-        else:
-            print(f"Error dari API: {data.get('messages')}")
-            return []
-    except requests.exceptions.RequestException as e:
-        print(f"Error saat mengambil data desa/kelurahan: {e}")
-        return []
-
-# Fungsi utama untuk mendapatkan data provinsi, kabupaten, kecamatan, dan desa, lalu menyimpannya ke Excel
-def fetch_data(api_url_provinces, api_url_cities, api_url_districts, api_url_villages, api_key, output_filename):
+# Fungsi utama untuk mendapatkan data provinsi, kabupaten, dan kecamatan, lalu menyimpannya ke Excel
+def fetch_data(api_url_provinces, api_url_cities, api_url_districts, api_key, output_filename):
     provinces = get_provinces(api_url_provinces, api_key)
 
     if not provinces:
@@ -124,23 +105,15 @@ def fetch_data(api_url_provinces, api_url_cities, api_url_districts, api_url_vil
                         district_id = district["id"]
                         district_name = district["name"]
 
-                        # Mendapatkan data desa/kelurahan untuk kecamatan ini
-                        villages = get_villages(api_url_villages, api_key, district_id)
-
-                        if villages:
-                            for village in villages:
-                                all_data.append({
-                                    "Provinsi": province_name,
-                                    "ID Provinsi": province_id,
-                                    "Kota/Kabupaten": city_name,
-                                    "ID Kota/Kabupaten": city_id,
-                                    "Kecamatan": district_name,
-                                    "ID Kecamatan": district_id,
-                                    "Desa/Kelurahan": village["name"],
-                                    "ID Desa/Kelurahan": village["id"]
-                                })
-                        else:
-                            print(f"Tidak ada desa ditemukan untuk kecamatan {district_name} di kota {city_name}")
+                        # Menambahkan data provinsi, kota, dan kecamatan ke dalam list
+                        all_data.append({
+                            "Provinsi": province_name,
+                            "ID Provinsi": province_id,
+                            "Kota/Kabupaten": city_name,
+                            "ID Kota/Kabupaten": city_id,
+                            "Kecamatan": district_name,
+                            "ID Kecamatan": district_id
+                        })
                 else:
                     print(f"Tidak ada kecamatan ditemukan untuk kota {city_name} di provinsi {province_name}")
         else:
@@ -154,7 +127,7 @@ def fetch_data(api_url_provinces, api_url_cities, api_url_districts, api_url_vil
     try:
         df = pd.DataFrame(all_data)
         df.to_excel(output_filename, index=False)
-        print(f"Data provinsi, kabupaten/kota, kecamatan, dan desa berhasil disimpan ke {output_filename}")
+        print(f"Data provinsi, kabupaten/kota, dan kecamatan berhasil disimpan ke {output_filename}")
     except Exception as e:
         print(f"Error saat menyimpan data ke Excel: {e}")
 
@@ -162,13 +135,12 @@ def fetch_data(api_url_provinces, api_url_cities, api_url_districts, api_url_vil
 API_URL_PROVINCES = "https://api.binderbyte.com/wilayah/provinsi"
 API_URL_CITIES = "https://api.binderbyte.com/wilayah/kabupaten"
 API_URL_DISTRICTS = "http://api.binderbyte.com/wilayah/kecamatan"
-API_URL_VILLAGES = "http://api.binderbyte.com/wilayah/kelurahan"
 API_KEY = "masukkan-api-key-anda-di-sini"  # Ganti dengan API Key Anda
-OUTPUT_FILENAME = "data_provinsi_kota_kecamatan_desa.xlsx"
+OUTPUT_FILENAME = "data_provinsi_kota_kecamatan.xlsx"
 
 # Jalankan program
 if __name__ == "__main__":
     if os.path.exists(OUTPUT_FILENAME):
         os.remove(OUTPUT_FILENAME)
 
-    fetch_data(API_URL_PROVINCES, API_URL_CITIES, API_URL_DISTRICTS, API_URL_VILLAGES, API_KEY, OUTPUT_FILENAME)
+    fetch_data(API_URL_PROVINCES, API_URL_CITIES, API_URL_DISTRICTS, API_KEY, OUTPUT_FILENAME)
